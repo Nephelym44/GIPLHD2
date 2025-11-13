@@ -819,8 +819,7 @@ def getAPIInfo():
         "storyBeatId32": statusData.get("storyBeatId32"),
     }
 
-def main():
-
+def main(discordWebhook):
     if discordWebhook == None:
         print("INSERT YOUR DISCORD WEBHOOK LINK. PLEASE MAKE SURE IT IS CORRECT, OTHERWISE YOU HAVE TO MANUALLY CORRECT IT.\n")
         webHookLink = input("WEBHOOK LINK: ")
@@ -859,4 +858,4 @@ def main():
         saveAPIData()
 
 if __name__ == "__main__":
-    main()
+    main(discordWebhook)
