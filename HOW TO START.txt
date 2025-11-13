@@ -1,0 +1,2 @@
+MAKE SURE YOU READ THE README IN THE REPOSITORY!!!!!!!!!!
+To start the logger just double click launcherlogger.bat 
