@@ -11,17 +11,18 @@ with open("planetRegion.json", "r", encoding="utf-8") as file:
 with open("planet_names.json", "r", encoding="utf-8") as file:
     planet_names = json.load(file)
 
-startTimeConstant = 1706040313
-
 baseDiretory = Path(__file__).resolve().parent # Me: Pega o diretório do programa
 apiDataPath = baseDiretory / "apiData.json" # Me: pega o diretório do arquivo especificado
 
+discordWebhook = None
+
 imgURL = "https://i.imgur.com/8uwjWSZ.jpg"
 dssGif = "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExNTh1eTd5dnh5eXY0NDhxb2FnM2VzeHc1Ync0ZHZlcW9pZ2g2aGg5ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/puQc8qpqgAXda5lJPm/giphy.gif"
-
-discordWebhook = None
 urlStatus = "https://api.live.prod.thehelldiversgame.com/api/WarSeason/801/Status" # Status = Decay, total pop, updates in real time
 urlWarinfo = "https://api.live.prod.thehelldiversgame.com/api/WarSeason/801/WarInfo" # WarInfo = Static info, has region and planet index, max health
+
+startTimeConstant = 1706040313
+
 
 apiStuff = {
     "planetData": [],
@@ -74,21 +75,8 @@ actionsDSS = {
     "1214" : "Heavy Ordinance Distribution"
 }
 
-lastNotifiedRegion = {}
-
-lastNotifiedPlanet = {}
-
-HTTP_PORT = 8080
-
-ALLOWED_FILES = {
-    "planetsHealthChange.json",
-    "regionHealthChange.json",
-    "apiData.json",
-    "eventsHealthChange.json"
-}
-
 def createEmbed(title, description, image, timestamp):
-    timestampNow = dt.now(pytz.timezone("UTC")).strftime("%Y/%m/%d, %H:%M:%S")
+    timestampNow = dt.now(pytz.timezone("Brazil/West")).strftime("%Y/%m/%d, %H:%M:%S")
     
     embed = {
                 "title": title,
@@ -105,10 +93,12 @@ def createEmbed(title, description, image, timestamp):
         try:
             data = {"embeds": [embed]}
             response = requests.post(discordWebhook, json=data)
+            time.sleep(1)
             if response.status_code != 204:
                 print(f"Webhook falhou ({response.status_code}): {response.text}")
                 time.sleep(2)
             print(f"[{timestampNow}] EMBED CREATED")
+            embed = None
         except Exception as e:
             print(f"Falha ao enviar notificação Discord: {e}")
             time.sleep(2)
@@ -140,7 +130,7 @@ def sendNotificationRegion(planetIndex, filteredAttr, hash):
 
     gifURL = None
     filteredLines = []
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
 
     
     planetName = getPlanetName(int(planetIndex))
@@ -160,14 +150,14 @@ def sendNotificationRegion(planetIndex, filteredAttr, hash):
             gifURL = gifsOwner.get(str(difference['new']))
             if oldName == None: 
                 title = "NEW REGION DETECTED!"
-                filteredLines.append(f"**{attr.upper()}:  {newName.upper()}**\n")
+                filteredLines.append(f"**{attr.upper()}:  {newName.upper()}**")
             else: 
                 if difference["old"] == 1:
-                    filteredLines.append(f"**{regionName.upper()} HAS FALLEN TO THE {newName.upper()}**\n")
+                    filteredLines.append(f"**{regionName.upper()} HAS FALLEN TO THE {newName.upper()}**")
                 elif difference["new"] == 1:
-                    filteredLines.append(f"**{regionName.upper()} HAS BEEN LIBERATED BY THE HELLDIVERS**\n")
+                    filteredLines.append(f"**{regionName.upper()} HAS BEEN LIBERATED BY THE HELLDIVERS**")
                 else:
-                    filteredLines.append(f"**{attr.upper()}:  {oldName.upper()}  ➜  {newName.upper()}**\n")
+                    filteredLines.append(f"**{attr.upper()}:  {oldName.upper()}  ➜  {newName.upper()}**")
 
         elif attr == 'regerPerSecond':
             oldRegen = difference['old']
@@ -178,27 +168,27 @@ def sendNotificationRegion(planetIndex, filteredAttr, hash):
             
             if oldRegen == None:
                 decayNew = ((newRegen*3600) / maxHP) * 100
-                filteredLines.append(f"**DECAY RELATIVE TO {maxHP} HP:  %{(decayNew):.2f}/h**\n")
+                filteredLines.append(f"**DECAY RELATIVE TO {maxHP} HP:  %{(decayNew):.2f}/h**")
             else:
                 decayOld = ((oldRegen*3600) / maxHP) * 100
                 decayNew = ((newRegen*3600) / maxHP) * 100
-                filteredLines.append(f"**DECAY RELATIVE TO {maxHP} HP:  %{(decayOld):.2f}/h  ➜  %{(decayNew):.2f}/h**\n")
+                filteredLines.append(f"**DECAY RELATIVE TO {maxHP} HP:  %{(decayOld):.2f}/h  ➜  %{(decayNew):.2f}/h**")
 
         elif attr == 'availabilityFactor':
             oldFactor = difference['old']
             newFactor = difference['new']
             if oldFactor == None:
-                filteredLines.append(f"**AVAILABLE AT:  %{((1-newFactor)*100):.3f}**\n")
+                filteredLines.append(f"**AVAILABLE AT:  %{((1-newFactor)*100):.3f}**")
             else:
-                filteredLines.append(f"**AVAILABLE AT:  %{((1-oldFactor)*100):.3f}  ➜  %{((1-newFactor)*100):.3f}**\n")
+                filteredLines.append(f"**AVAILABLE AT:  %{((1-oldFactor)*100):.3f}  ➜  %{((1-newFactor)*100):.3f}**")
 
         elif attr == 'isAvailable':
             oldAvailable = difference['old']
             newAvailable = difference['new']
             if oldAvailable == None:
-                filteredLines.append(f"**AVAILABLE:  {newAvailable}\n**")
+                filteredLines.append(f"**AVAILABLE:  {newAvailable}**")
             else:
-                filteredLines.append(f"**AVAILABLE:  {oldAvailable} ➜ {newAvailable}\n**")
+                filteredLines.append(f"**AVAILABLE:  {oldAvailable} ➜ {newAvailable}**")
 
     filteredText = "\n".join(filteredLines)
 
@@ -209,12 +199,9 @@ def sendNotificationPlanet(planetIndex, filteredAttr):
     
     gifURL = None
     filteredLines = []
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
     planetName = getPlanetName(int(planetIndex))
     if not isinstance(planetName, str): return ("ERROR, NAME NOT FOUND")
-
-    title = "🚨 PLANET CHANGE DETECTED!"
-    filteredLines.append(f"**\nPLANET NAME: {planetName}**\n")
 
     for attr, difference in filteredAttr.items():
 
@@ -268,27 +255,33 @@ def sendNotificationPlanet(planetIndex, filteredAttr):
 
         else: filteredLines.append(f"**{attr.upper()}: {difference['old']} ➜ {difference['new']}**\n")
 
+    title = "🚨 PLANET CHANGE DETECTED!"
+    filteredLines.append(f"**\nPLANET NAME: {planetName}**\n")
     filteredText = "\n".join(filteredLines)
-    
+
     if gifURL:createEmbed(title, filteredText, gifURL, timestamp)
     else: createEmbed(title, filteredText, imgURL, timestamp)
 
 def sendNotificationEvent(hasEnded, event, deviation):
 
     gifURL = None
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
 
     if not hasEnded:
 
         expiresAt = event.get("expireTime")
         startedAt = event.get("startTime")
-        defenseLevel = int(event.get("maxHealth")) / 50000
+        type = event.get("eventType")
         race = event.get("race")
-        typeEvent = eventTypes.get(str(event.get("eventType")))
         pIndex = event.get("planetIndex")
+        defenseLevel = int(event.get("maxHealth")) / 50000
+
+        typeEvent = eventTypes.get(str(type))
         faction = factionNames.get(str(race))
+
         startedAtAtReal = startTimeConstant + startedAt + deviation
         expiresAtReal = startTimeConstant + expiresAt + deviation
+
         planetAttacks = apiStuff.get("planetAttacks", [])
         attackList = []
 
@@ -306,25 +299,27 @@ def sendNotificationEvent(hasEnded, event, deviation):
                     attackList.append(pNameSource)
                     attackText = " ".join(attackList)
                 break
+
         title = "🚨 PLANET EVENT STARTED!"
         descriptionList = []
         descriptionList.append(f"**\nPLANET NAME: {pName}**\n")
-        descriptionList.append(f"**\nEVENT TYPE: {typeEvent.upper()}**\n")
-        descriptionList.append(f"**\nPLANET ATTACKED BY THE: {faction.upper()}**\n")
-        descriptionList.append(f"**\nATTACK SOURCE(S): {attackText}**\n")
-        descriptionList.append(f"**\n{typeEvent.upper()} LEVEL: {int(defenseLevel)}**\n")
-        descriptionList.append(f"**\n{typeEvent.upper()} TOTAL HP: {int(defenseLevel)*50000}**\n")
-        descriptionList.append(f"**\n{typeEvent.upper()} STARTED**: <t:{startedAtAtReal}>\n")
-        descriptionList.append(f"**\n{typeEvent.upper()} ENDS**: <t:{expiresAtReal}>\n")
-        descriptionText = "\n".join(descriptionList)
+        descriptionList.append(f"**EVENT TYPE: {typeEvent.upper()}**\n")
+        descriptionList.append(f"**PLANET ATTACKED BY THE: {faction.upper()}**\n")
+        descriptionList.append(f"**ATTACK SOURCE(S): {attackText}**\n")
+        descriptionList.append(f"**{typeEvent.upper()} LEVEL: {int(defenseLevel)}**\n")
+        descriptionList.append(f"**{typeEvent.upper()} TOTAL HP: {int(defenseLevel)*50000}**\n")
+        descriptionList.append(f"**{typeEvent.upper()} STARTED**: <t:{startedAtAtReal}>\n")
+        descriptionList.append(f"**{typeEvent.upper()} ENDS**: <t:{expiresAtReal}>\n")
 
+        descriptionText = "\n".join(descriptionList)
         createEmbed(title, descriptionText, gifURL, timestamp)
 
 
     if hasEnded:
         race = event.get("race")
         pIndex = event.get("planetIndex")
-        typeEvent = eventTypes.get(str(event.get("eventType")))
+        type = event.get("eventType")
+        typeEvent = eventTypes.get(str(type))
         faction = factionNames.get(str(race))
         currentPlanetData = deepcopy(apiStuff["planetData"])
         hasLost = True
@@ -340,54 +335,59 @@ def sendNotificationEvent(hasEnded, event, deviation):
         if not isinstance(typeEvent, str): typeEvent = ("name not found")
 
         title = "🚨 PLANET EVENT ENDED!"
-        descriptionList = []
+        descriptionList = [] 
         descriptionList.append(f"**\nPLANET NAME: {pName}**\n")
-        descriptionList.append(f"**\nEVENT TYPE: {typeEvent.upper()}**\n")
-        descriptionList.append(f"**\nPLANET ATTACKED BY THE: {faction.upper()}**\n")
-        descriptionList.append(f"**\nATTACK SOURCE(S): {attackText}**\n")
-        descriptionList.append(f"**\n{typeEvent.upper()} LEVEL: {int(defenseLevel)}**\n")
-        descriptionList.append(f"**\n{typeEvent.upper()} TOTAL HP: {int(defenseLevel)*50000}**\n")
-        descriptionList.append(f"**\n{typeEvent.upper()} STARTED**: <t:{startedAtAtReal}>\n")
-        descriptionList.append(f"**\n{typeEvent.upper()} ENDS**: <t:{expiresAtReal}>\n")
+        descriptionList.append(f"**EVENT TYPE: {typeEvent.upper()}**\n")
+        descriptionList.append(f"**PLANET ATTACKED BY THE: {faction.upper()}**\n")
+        descriptionList.append(f"**ATTACK SOURCE(S): {attackText}**\n")
+        descriptionList.append(f"**{typeEvent.upper()} LEVEL: {int(defenseLevel)}**\n")
+        descriptionList.append(f"**{typeEvent.upper()} TOTAL HP: {int(defenseLevel)*50000}**\n")
+        descriptionList.append(f"**{typeEvent.upper()} STARTED**: <t:{startedAtAtReal}>\n")
+        descriptionList.append(f"**{typeEvent.upper()} ENDS**: <t:{expiresAtReal}>\n")
+        
         if hasLost:
             gifURL = gifsOwner.get(str(race))
-            descriptionList.append(f"\n**THE HELLDIVERS HAVE LOST THE {typeEvent.upper()} TO {faction.upper()}**")
+            descriptionList.append(f"**THE HELLDIVERS HAVE LOST THE {typeEvent.upper()} TO {faction.upper()}\n**")
 
         if not hasLost:
             gifURL = gifsOwner.get(str(currentOwner))
-            descriptionList.append(f"\n**THE HELLDIVERS HAVE WON THE {typeEvent.upper()} AGAINST THE {faction.upper()}**")
+            descriptionList.append(f"**THE HELLDIVERS HAVE WON THE {typeEvent.upper()} AGAINST THE {faction.upper()}\n**")
 
         descriptionText = "\n".join(descriptionList)
-
         createEmbed(title, descriptionText, gifURL, timestamp)
 
 def sendNotificationDSS(newPIndex, oldPIndex, newEffects, oldEffects):
 
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
+
     if str(oldPIndex) in planet_names: oldName = planet_names.get(str(oldPIndex))
-    else: return ("ERRO, NO NAME")
+    else: return ("ERROR, NO NAME")
+
     if str(newPIndex) in planet_names: newName = planet_names.get(str(newPIndex))
-    else: return ("ERRO, NO NAME")
-    textList = []
+    else: return ("ERROR, NO NAME")
+
     if not newPIndex == oldPIndex:
+        textList = []
         textList.append(f"**\nDSS HAS WARPED FROM {oldName.upper()} ➜ {newName.upper()}**\n")
     
     if not newEffects == oldEffects:
         
         for effectIDNew in newEffects:
             if effectIDNew not in oldEffects:
-                
+                textList = []
                 if str(effectIDNew) in actionsDSS:
                     effectNameNew = actionsDSS[str(effectIDNew)]
                     textList.append(f"**EFFECT {effectNameNew.upper()} ({effectIDNew}) ADDED**\n")
+
                 else:textList.append(f"**EFFECT {effectIDNew} ADDED**\n")
                 
         for effectIDOld in oldEffects:
             if effectIDOld not in newEffects:
-
+                textList = []
                 if str(effectIDOld) in actionsDSS:
                     effectNameOld = actionsDSS[str(effectIDOld)]
                     textList.append(f"**EFFECT {effectNameOld.upper()} ({effectIDOld}) ENDED**\n")
+
                 else:textList.append(f"**EFFECT {effectIDOld} ENDED**\n")
                 
     title = "🚨 DSS UPDATED!"
@@ -405,25 +405,24 @@ def sendNotificationGenInfo(oldData):
     newStoryID = newGenInfo["storyBeatId32"]
     oldStoryID = oldGenInfo["storyBeatId32"]
 
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
 
-    changes = []
+    descriptionLines = []
     title = "🚨 GENERAL INFO UPDATED!"
-    if oldLayout != newLayout: changes.append(f"**LAYOUT VERSION: {oldLayout} ➜ {newLayout}**")
-    if oldStoryID != newStoryID: changes.append(f"**STORY BEAT ID: {oldStoryID} ➜ {newStoryID}**")
-    if not changes: return
+    if oldLayout != newLayout: descriptionLines.append(f"**LAYOUT VERSION: {oldLayout} ➜ {newLayout}**")
+    if oldStoryID != newStoryID: descriptionLines.append(f"**STORY BEAT ID: {oldStoryID} ➜ {newStoryID}**")
+    if not descriptionLines: return
 
-    description = "\n".join(changes)
-
+    description = "\n".join(descriptionLines)
     createEmbed(title, description, imgURL, timestamp)
 
 def sendNotificationCampaign(oldData):
     oldCampaign = deepcopy(oldData.get("campaignData", []))
     newCampaign = deepcopy(apiStuff.get("campaignData", []))
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
 
     if oldCampaign == newCampaign: return
-    descriptionLines = []
+
     oldDict = {campaign["id"]: campaign for campaign in oldCampaign}
     newDict = {campaign["id"]: campaign for campaign in newCampaign}
 
@@ -435,6 +434,8 @@ def sendNotificationCampaign(oldData):
     equalIDs = oldIDs & newIDs
 
     for campaignId in hasEndedIDs:
+        descriptionLines = []
+        title = "🚨 GENERAL INFO UPDATED!"
         campaign = oldDict[campaignId]
         pIndexOld = campaign.get("planetIndex")
         pCampaignTypeOld = campaign.get("type")
@@ -442,7 +443,13 @@ def sendNotificationCampaign(oldData):
         pNameOld = getPlanetName(int(pIndexOld))
         descriptionLines.append(f"**{pCampaignNameOld.upper()} CAMPAIGN ON {pNameOld.upper()} HAS ENDED**\n")
 
+        descriptionText = "\n".join(descriptionLines)
+        createEmbed(title, descriptionText, imgURL, timestamp)
+
+
     for campaignId in hasStartedIDs:
+        descriptionLines = []
+        title = "🚨 GENERAL INFO UPDATED!"
         campaign = newDict[campaignId]
         pIndexNew = campaign.get("planetIndex")
         pCampaignTypeNew = campaign.get("type")
@@ -450,7 +457,13 @@ def sendNotificationCampaign(oldData):
         pNameNew = getPlanetName(int(pIndexNew))
         descriptionLines.append(f"**{pCampaignNameNew.upper()} CAMPAIGN ON {pNameNew.upper()} HAS STARTED**\n")
 
+        descriptionText = "\n".join(descriptionLines)
+        createEmbed(title, descriptionText, imgURL, timestamp)
+
+
     for campaignId in equalIDs:
+        descriptionLines = []
+        title = "🚨 GENERAL INFO UPDATED!"
         oldCamp = oldDict[campaignId]
         newCamp = newDict[campaignId]
         pName = getPlanetName(int(newCamp["planetIndex"]))
@@ -459,78 +472,63 @@ def sendNotificationCampaign(oldData):
             oldType = campaignTypes[str(oldCamp["type"])] 
             newType = campaignTypes[str(newCamp["type"])] 
             descriptionLines.append(f"**CAMPAIGN ON {pName.upper()} CHANGED FROM {oldType.upper()}  ➜  {newType.upper()}**\n")
-                
-    descriptionText = "\n".join(descriptionLines)
-    title = "🚨 GENERAL INFO UPDATED!"
 
-    createEmbed(title, descriptionText, imgURL, timestamp)
-
+        descriptionText = "\n".join(descriptionLines)
+        createEmbed(title, descriptionText, imgURL, timestamp)
+    
 def sendNotificationGlobalEvent(oldData):
     oldGlobal = deepcopy(oldData.get("globalEvents", []))
     newGlobal = deepcopy(apiStuff.get("globalEvents", []))
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
 
     newGlobalDict = {globalEvent["eventId"]: globalEvent for globalEvent in newGlobal}
     oldGlobalDict = {globalEvent["eventId"]: globalEvent for globalEvent in oldGlobal}
 
+    if newGlobalDict == oldGlobalDict: return
+
     oldIDs = set(oldGlobalDict.keys())
     newIDs = set(newGlobalDict.keys())
 
-    descriptionLines = []
     hasEndedIDs = oldIDs - newIDs
     hasStartedIDs = newIDs - oldIDs
-    updated = False
 
     for globalEventID in hasEndedIDs:
+        descriptionLines = []
         globalEventEnded = oldGlobalDict[globalEventID]
+
         title = (f"🚨GLOBAL EVENT ENDED")
+        titleEvent = globalEventEnded.get("title")
         message = globalEventEnded.get("message")
-        descriptionLines.append(message)
-        updated = True
-    
+
+        descriptionLines.append(f"# {titleEvent}\n")
+        descriptionLines.append(f"**{message}**")
+        descriptionText = "\n".join(descriptionLines)
+
+        createEmbed(title, descriptionText, imgURL, timestamp)
+        
     for globalEventID in hasStartedIDs:
+        descriptionLines = []
         globalEventStarted = newGlobalDict[globalEventID]
+
         title = (f"🚨GLOBAL EVENT STARTED")
         message = globalEventStarted.get("message")
-        descriptionLines.append(message)
+        titleEvent = globalEventStarted.get("title")
+
+        descriptionLines.append(f"# {titleEvent}\n")
+        descriptionLines.append(f"**{message}**")
+
         gametime = apiStuff["generalInfo"].get("time")
         expiresAt = globalEventStarted.get("expireTime")
+
         unixNow = int(dt.now().timestamp())
         deviation =  unixNow - (startTimeConstant + gametime)
         expiresAtReal = startTimeConstant + expiresAt + deviation
+
         descriptionLines.append(f"**\nGLOBAL EVENT ENDS**: <t:{expiresAtReal}>\n")
-        updated = True
-    
-    if updated:
         descriptionText = "\n".join(descriptionLines)
+
         createEmbed(title, descriptionText, imgURL, timestamp)
-
-    else: return
-
-def shouldNotifyPlanet(planetIndex, filteredAttr):
-
-    key = planetIndex
-
-    filter = {attr: value["new"] for attr, value in filteredAttr.items()}
-    
-    if lastNotifiedPlanet.get(key) != filter:
-        lastNotifiedPlanet[key] = filter
-        return True
-    
-    return False
-
-def shouldNotifyRegion(planetIndex,regionIndex, filteredAttr):
-
-    key = f"{planetIndex}_{regionIndex}"
-
-    filter = {attr: value["new"] for attr, value in filteredAttr.items()}
-
-    if lastNotifiedRegion.get(key) != filter:
-        lastNotifiedRegion[key] = filter
-        return True
-    
-    return False
-    
+     
 def updateRegionData(oldData):
 
     oldRegions = deepcopy(oldData.get("regionData", []))
@@ -543,7 +541,7 @@ def updateRegionData(oldData):
 
     regionChanges = {}
     update = False
-    timestamp = dt.now(pytz.timezone("UTC")).strftime("%Y/%m/%d, %H:%M:%S")
+    timestamp = dt.now(pytz.timezone("Brazil/West")).strftime("%Y/%m/%d, %H:%M:%S")
 
     for keyStr, newRegion in newRegionMap.items():
         oldRegion = oldRegionMap.get(keyStr)
@@ -569,9 +567,9 @@ def updateRegionData(oldData):
 
             filterAttr = {'owner', 'regerPerSecond', 'isAvailable', 'availabilityFactor'}
             filteredAttr = {aFilter: valueFilter for aFilter, valueFilter in changeDict.items() if aFilter in filterAttr}
-            pIndex, rIndex = keyStr.split("_")
+            pIndex, _ = keyStr.split("_")
             
-            if filteredAttr and shouldNotifyRegion(pIndex, rIndex, filteredAttr):
+            if filteredAttr :
                     sendNotificationRegion(pIndex, filteredAttr, hash = oldRegion['settingsHash'])
         
     apiStuff["regionData"] = list(oldRegionMap.values())
@@ -584,8 +582,9 @@ def updateRegionData(oldData):
             for change in changeData["changes"]:
                 if change["attribute"] == "health":
                     filterHealth.append(change)
+
             if filterHealth:
-                regionHealthChanges[regionID] = {"changes": filterHealth}
+                regionHealthChanges[regionID] = filterHealth
 
         if regionHealthChanges:
             with open('regionHealthChange.json', 'w', encoding='utf-8') as file:
@@ -608,7 +607,7 @@ def updatePlanetData(oldData):
 
     planetChanges = {}
     update = False
-    timestamp = dt.now(pytz.timezone("UTC")).strftime("%Y/%m/%d, %H:%M:%S")
+    timestamp = dt.now(pytz.timezone("Brazil/West")).strftime("%Y/%m/%d, %H:%M:%S")
 
     for index, newPlanet in newPlanetMap.items():
         oldPlanet = oldPlanetMap.get(index)
@@ -637,7 +636,7 @@ def updatePlanetData(oldData):
             filterAttr = {'owner', 'regenPerSecond', 'disabled', 'maxHealth', 'waypoints', 'galacticEffectId'}
             filteredAttr = {aFilter: valueFilter for aFilter, valueFilter in changeDict.items() if aFilter in filterAttr}
 
-            if filteredAttr and shouldNotifyPlanet(index, filteredAttr):
+            if filteredAttr:
                 sendNotificationPlanet(index, filteredAttr)
     
     apiStuff["planetData"] = list(oldPlanetMap.values())
@@ -650,13 +649,14 @@ def updatePlanetData(oldData):
                 if change["attribute"] == "health":
                     filterHealth.append(change)
             if filterHealth:
-                planetHealthChanges[planetID] = {"changes": filterHealth}
+                planetHealthChanges[planetID] = filterHealth
 
         if planetHealthChanges:
             with open('planetsHealthChange.json', 'w', encoding='utf-8') as file:
                 json.dump(planetHealthChanges, file, indent=2, ensure_ascii=False)
                 file.write("\n")             
             print(f"[{timestamp}] {len(planetHealthChanges)} PLANETS HAD HEALTH CHANGES.")
+            
         else:
             print(f"[{timestamp}] NO PLANET HEALTH CHANGE")
 
@@ -693,13 +693,14 @@ def updatePlanetEvents(oldData):
                     "new": newHP
                 }
     
-    timestamp = dt.now(pytz.timezone("UTC")).strftime("%Y/%m/%d, %H:%M:%S")
+    timestamp = dt.now(pytz.timezone("Brazil/West")).strftime("%Y/%m/%d, %H:%M:%S")
 
     if healthChanges:
             with open('eventsHealthChange.json', 'w', encoding='utf-8') as file:
                 json.dump(healthChanges, file, indent=2, ensure_ascii=False)
                 file.write("\n")  
             print(f"[{timestamp}] {len(healthChanges)} PLANET EVENTS HAD HEALTH CHANGES.")
+
     else:
         print(f"[{timestamp}] NO PLANET EVENT HEALTH CHANGE")           
     
@@ -722,7 +723,6 @@ def updateDSS(oldData):
     changedElection = newElection != oldElection
 
     if changedElection and not (changedPIndex or changedEffects): return
-
     sendNotificationDSS(newPIndex, oldPIndex, newEffects, oldEffects)
 
 def getAPIInfo():
