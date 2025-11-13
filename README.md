@@ -2,6 +2,7 @@
 GPIL or General Purpose Information Logger is meant to be a logger for the Galactic War  in the game Helldivers 2. Meant to be integrated on Discord with the Webhook integration.
 # HOW TO INSTALL
 If you are a Windows user, just download the installer.exe for a easy install of the logger.<br/>
+<br/>
 Otherwise, you can download the raw files from the Repo and setup it yourself.
 # HOW TO USE DISCORD WEBHOOK
 When installing the logger you will need to link a webhook url to the logger for it to work. In order to do this, you must create a channel in a Discord specifically for the logger.<br/>
