@@ -6,34 +6,26 @@ import pytz
 from pathlib import Path
 import IDsnames as valuesMeaning
 import re
-import planetNames as planet_names
+import planetNames as planetNames
 import regionNames as planetRegionData
-import http.server
-import socketserver
-import threading
-import socket
-# PARA USO PESSOAL MEU
 
-baseDiretory = Path(__file__).resolve().parent 
-apiDataPath = baseDiretory / "apiData.json" 
+baseDiretory = Path(__file__).resolve().parent # Me: Pega o diretório do programa
+apiDataPath = baseDiretory / "apiData.json" # Me: pega o diretório do arquivo especificado
+
+discordWebhook = None
 
 imgURL = "https://i.imgur.com/8uwjWSZ.jpg"
 dssGif = "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExNTh1eTd5dnh5eXY0NDhxb2FnM2VzeHc1Ync0ZHZlcW9pZ2g2aGg5ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/puQc8qpqgAXda5lJPm/giphy.gif"
 newsGif = "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExNjJ3dXkyNW55YmtpNmhxc2lpYnl1dWR1ejVwcjFkY2hibXRrejZraiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/yMwka6flHN3BEqrDxL/giphy.gif"
-discordWebhook = "https://discord.com/api/webhooks/1437068188851634247/JWYHD3GW0J-H06l7GJnyqGyxXR6aI1ytsuUZ_I9wz0SzHq2o7T7uxNdzZmc5WeOfNuZ-"
 urlStatus = "https://api.live.prod.thehelldiversgame.com/api/WarSeason/801/Status" 
 urlWarinfo = "https://api.live.prod.thehelldiversgame.com/api/WarSeason/801/WarInfo" 
 urlDiveHarder = "https://api.diveharder.com/raw/all" 
 
 startTimeConstant = 1706040313
 
-HTTP_PORT = 8080
-ALLOWED_FILES = {
-    "planetsHealthChange.json",
-    "regionHealthChange.json",
-    "apiData.json",
-    "eventsHealthChange.json"
-}
+
+startTimeConstant = 1706040313
+
 
 apiStuff = {
     "planetData": [],
@@ -323,7 +315,7 @@ def sendNotificationEvent(hasEnded, event, deviation):
         planetAttacks = apiStuff.get("planetAttacks", [])
         attackList = []
 
-        if pIndex in planet_names: pName = planet_names.get(pIndex)
+        if pIndex in planetNames.planet_names: pName = planetNames.planet_names.get(pIndex)
         if not isinstance(faction, str): return ("ERROR, NAME NOT FOUND")
         if not isinstance(typeEvent, str): return ("ERROR, NAME NOT FOUND")
         gifURL = gifsOwner.get(race)
@@ -332,8 +324,8 @@ def sendNotificationEvent(hasEnded, event, deviation):
             sourceID = planet.get("source")
             targetID = planet.get("target")
             if pIndex == targetID:
-                if sourceID in planet_names: 
-                    pNameSource = planet_names.get(sourceID)
+                if sourceID in planetNames.planet_names: 
+                    pNameSource = planetNames.planet_names.get(sourceID)
                     attackList.append(pNameSource)
                     attackText = " ".join(attackList)
                 break
@@ -368,7 +360,7 @@ def sendNotificationEvent(hasEnded, event, deviation):
                 if race != currentOwner: hasLost = False
                 break
      
-        if pIndex in planet_names: pName = planet_names.get(pIndex)
+        if pIndex in planetNames.planet_names: pName = planetNames.planet_names.get(pIndex)
         if not isinstance(faction, str): faction = ("name not found")
         if not isinstance(typeEvent, str): typeEvent = ("name not found")
 
@@ -393,10 +385,10 @@ def sendNotificationDSS(newPIndex, oldPIndex, newEffects, oldEffects):
 
     timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
 
-    if oldPIndex in planet_names: oldName = planet_names.get(oldPIndex)
+    if oldPIndex in planetNames.planet_names: oldName = planetNames.planet_names.get(oldPIndex)
     else: return ("ERROR, NO NAME")
 
-    if newPIndex in planet_names: newName = planet_names.get(newPIndex)
+    if newPIndex in planetNames.planet_names: newName = planetNames.planet_names.get(newPIndex)
     else: return ("ERROR, NO NAME")
 
     if not newPIndex == oldPIndex:
@@ -1005,7 +997,7 @@ def getAPIInfo():
         effectsGrouped[effectPIndex].append(effectID)
     
     for planetIndex, _ in staticMapPlanet.items(): 
-        if planetIndex in planet_names: staticMapPlanet[planetIndex]['name'] = planet_names[planetIndex]
+        if planetIndex in planetNames.planet_names: staticMapPlanet[planetIndex]['name'] = planetNames.planet_names[planetIndex]
         staticMapPlanet[planetIndex]['galacticEffectId'] = effectsGrouped.get(planetIndex, [])
         
     staticMapRegion = {(region['planetIndex'], region['regionIndex']): region for region in staticRegion}
@@ -1023,7 +1015,7 @@ def getAPIInfo():
     
     for tupla, region in staticMapRegion.items(): 
         regionHash = region['settingsHash']
-        if regionHash in planetRegionData: staticMapRegion[tupla]['name'] = planetRegionData[regionHash]['name']
+        if regionHash in planetRegionData.planetRegion: staticMapRegion[tupla]['name'] = planetRegionData.planetRegion[regionHash]
     
     lastestNews = diveNewsFeed[-10:]
 
@@ -1045,47 +1037,20 @@ def getAPIInfo():
         "storyBeatId32": statusData.get("storyBeatId32"),
     }
 
-class RestrictedHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    def list_directory(self, path):
-        self.send_error(403, "Directory listing is disabled")
-        return None
+def main(discordWebhook):
+    if discordWebhook == None:
+        print("INSERT YOUR DISCORD WEBHOOK LINK. PLEASE MAKE SURE IT IS CORRECT, OTHERWISE YOU HAVE TO MANUALLY CORRECT IT.\n")
+        webHookLink = input("WEBHOOK LINK: ")
+        if isinstance(webHookLink, str): 
+            print("\nLINKING SUCESSFUL")
+            input("\nPress any key to continue")
+            discordWebhook = webHookLink
 
-    def do_GET(self):
-        file_name = self.path.lstrip("/")
-        if file_name in ALLOWED_FILES:
-            file_path = baseDiretory / file_name
-            if file_path.exists():
-                self.send_response(200)
-                self.send_header("Content-type", "application/json; charset=utf-8")
-                self.end_headers()
-                with open(file_path, "rb") as f:
-                    self.wfile.write(f.read())
-                print(f"📤 Enviado: {file_name}")
-            else:
-                self.send_error(404, "File not found")
-        else:
-            self.send_error(403, "Access denied")
+        else: 
+            print("\nLINKING IS WRONG, TRY MANUALLY INSERTING IT.")
+            input("\nPress any key to continue")
+            return 0
 
-def get_local_ip():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-    except Exception:
-        ip = "127.0.0.1"
-    return ip
-
-def start_file_server():
-    handler = RestrictedHTTPRequestHandler
-    with socketserver.TCPServer(("", HTTP_PORT), handler) as httpd:
-        print(f"Servidor HTTP ativo em: http://{get_local_ip()}:{HTTP_PORT}")
-        print("Arquivos disponíveis:", ", ".join(ALLOWED_FILES))
-        httpd.serve_forever()
-
-def main():
-
-    threading.Thread(target=start_file_server, daemon=True).start()
     getAPIInfo()
 
     if not apiDataPath.exists():
@@ -1093,14 +1058,13 @@ def main():
         saveAPIData()
 
     while True:
-        timestampStart = dt.now(pytz.timezone("Brazil/West")).strftime("%Y/%m/%d, %H:%M:%S")
+        timestampStart = dt.now(pytz.timezone("UTC")).strftime("%Y/%m/%d, %H:%M:%S")
         print(f"[{timestampStart}]")
         time.sleep(30)
         getAPIInfo()
         oldData = loadAPIData()
 
-        if oldData:
-        
+        if oldData: 
             updatePlanetData(oldData)
             updateRegionData(oldData)
             updatePlanetEvents(oldData)
@@ -1114,4 +1078,4 @@ def main():
         saveAPIData()
 
 if __name__ == "__main__":
-    main()
+    main(discordWebhook)
