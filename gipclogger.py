@@ -744,7 +744,7 @@ def updatePlanetEvents(oldData):
             hasEnded = True
             sendNotificationEvent(hasEnded, oldEvent, deviation)
 
-def sendNotificationDSS(oldData):
+def updateDSS(oldData):
     oldDSS = deepcopy(oldData.get('spaceStations', []))
     newDSS = deepcopy(apiStuff.get('spaceStations', []))
     
@@ -1068,10 +1068,10 @@ def main(discordWebhook):
             updatePlanetData(oldData)
             updateRegionData(oldData)
             updatePlanetEvents(oldData)
+            updateDSS(oldData)
             sendNotificationMajorOrder(oldData)
             sendNotificationGlobalEvent(oldData)
             sendNotificationCampaign(oldData)
-            sendNotificationDSS(oldData)
             sendNotificationNews(oldData)
             sendNotificationGenInfo(oldData)
         
