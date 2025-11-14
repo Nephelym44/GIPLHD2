@@ -110,25 +110,35 @@ def createEmbed(title, description, image, timestamp):
             time.sleep(2)
 
 def saveAPIData():
-    apiDataPath.write_text(json.dumps(apiStuff, indent=2, ensure_ascii=False), encoding='utf-8')
-               
+    apiDataPath.write_text(json.dumps(apiStuff, indent=2, ensure_ascii=False), encoding='utf-8')        
+
 def loadAPIData():
     if apiDataPath.exists():
         return json.loads(apiDataPath.read_text(encoding='utf-8'))
 
 def getPlanetName(planetIndex):
     try:
-        planets = loadAPIData()
-        for planet in planets['planetData']:
+        for planet in apiStuff['planetData']:
             if planet['index'] == planetIndex: return planet.get('name')
     except:
         return None
 
 def getRegionName(regionHash):
     try:
-        regions = loadAPIData()
-        for region in regions['regionData']:
+        for region in apiStuff['regionData']:
             if region['settingsHash'] == regionHash: return region.get('name')
+    except:
+        return None
+    
+def getRegionSize(regionHash):
+    try:
+        for region in apiStuff['regionData']:
+            if region['settingsHash'] == regionHash: 
+                size = region.get('regionSize')
+                if size == 0: return ("Settlement")
+                elif size == 1: return ("Town")
+                elif size == 2: return ("City")
+                elif size == 3: return ("Mega City")
     except:
         return None
 
@@ -141,13 +151,14 @@ def sendNotificationRegion(planetIndex, filteredAttr, hash):
     
     planetName = getPlanetName(int(planetIndex))
     regionName = getRegionName(hash)
-
+    regionSize = getRegionSize(hash)
     if not isinstance(planetName, str): return ("ERROR, NAME NOT FOUND")
     if not isinstance(regionName, str): return ("ERROR, NAME NOT FOUND")
 
     title = "🚨REGION UPDATE DETECTED!"
     filteredLines.append(f"**\nPLANET NAME: {planetName}**\n")
     filteredLines.append(f"**REGION NAME: {regionName}**\n")
+    filteredLines.append(f"**REGION TYPE: {regionSize}**\n")
 
     for attr, difference in filteredAttr.items():
 
