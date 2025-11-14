@@ -135,10 +135,10 @@ def getRegionSize(regionHash):
         for region in apiStuff['regionData']:
             if region['settingsHash'] == regionHash: 
                 size = region.get('regionSize')
-                if size == 0: return ("Settlement")
-                elif size == 1: return ("Town")
-                elif size == 2: return ("City")
-                elif size == 3: return ("Mega City")
+                if size == 0: return ("SETTLEMENT")
+                elif size == 1: return ("TOWN")
+                elif size == 2: return ("CITY")
+                elif size == 3: return ("MEGA CITY")
     except:
         return None
 
