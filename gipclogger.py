@@ -4,7 +4,7 @@ from copy import deepcopy
 import json, time
 import pytz
 from pathlib import Path
-import IDsnames as valuesMeaning
+import IDsnames as namesID
 import re
 import planetNames as planetNames
 import regionNames as planetRegionData
@@ -22,10 +22,6 @@ urlWarinfo = "https://api.live.prod.thehelldiversgame.com/api/WarSeason/801/WarI
 urlDiveHarder = "https://api.diveharder.com/raw/all" 
 
 startTimeConstant = 1706040313
-
-
-startTimeConstant = 1706040313
-
 
 apiStuff = {
     "planetData": [],
@@ -75,14 +71,8 @@ campaignTypes = {
     4 : "Event"
 }
 
-actionsDSS = {
-    1209 : "Eagle Storm",
-    1210 : "Orbital Blockade",
-    1214 : "Heavy Ordinance Distribution"
-}
-
 def createEmbed(title, description, image, timestamp):
-    timestampNow = dt.now(pytz.timezone("UTC")).strftime("%Y/%m/%d, %H:%M:%S")
+    timestampNow = dt.now(pytz.timezone("Brazil/West")).strftime("%Y/%m/%d, %H:%M:%S")
     
     embed = {
                 "title": title,
@@ -110,8 +100,8 @@ def createEmbed(title, description, image, timestamp):
             time.sleep(2)
 
 def saveAPIData():
-    apiDataPath.write_text(json.dumps(apiStuff, indent=2, ensure_ascii=False), encoding='utf-8')        
-
+    apiDataPath.write_text(json.dumps(apiStuff, indent=2, ensure_ascii=False), encoding='utf-8')
+               
 def loadAPIData():
     if apiDataPath.exists():
         return json.loads(apiDataPath.read_text(encoding='utf-8'))
@@ -146,12 +136,13 @@ def sendNotificationRegion(planetIndex, filteredAttr, hash):
 
     gifURL = None
     filteredLines = []
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
 
     
     planetName = getPlanetName(int(planetIndex))
     regionName = getRegionName(hash)
     regionSize = getRegionSize(hash)
+
     if not isinstance(planetName, str): return ("ERROR, NAME NOT FOUND")
     if not isinstance(regionName, str): return ("ERROR, NAME NOT FOUND")
 
@@ -225,7 +216,7 @@ def sendNotificationPlanet(planetIndex, filteredAttr):
     
     gifURL = None
     filteredLines = []
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
     planetName = getPlanetName(int(planetIndex))
     if not isinstance(planetName, str): return ("ERROR, NAME NOT FOUND")
 
@@ -289,11 +280,20 @@ def sendNotificationPlanet(planetIndex, filteredAttr):
 
             for effectIDNew in newEffects:
                 if effectIDNew not in oldEffects:
-                    filteredLines.append(f"**EFFECT {effectIDNew} ADDED**\n")
+
+                    if effectIDNew in namesID.planetEffects:
+                        effectNameNew = namesID.planetEffects[effectIDNew]
+                        filteredLines.append(f"**EFFECT {effectNameNew.upper()} ({effectIDNew}) ADDED**\n")
+
+                    else: filteredLines.append(f"**EFFECT {effectIDNew} ADDED**\n")
 
             for effectIDOld in oldEffects:
                 if effectIDOld not in newEffects:
-                    filteredLines.append(f"**EFFECT {effectIDOld} REMOVED**\n")
+                    if effectIDOld in namesID.planetEffects:
+                        effectNameOld = namesID.planetEffects[effectIDOld]
+                        filteredLines.append(f"**EFFECT {effectNameOld.upper()} ({effectIDOld}) REMOVED**\n")
+
+                    else: filteredLines.append(f"**EFFECT {effectIDOld} REMOVED**\n")
 
         else: filteredLines.append(f"**{attr.upper()}: {difference['old']} ➜ {difference['new']}**\n")
 
@@ -306,7 +306,7 @@ def sendNotificationPlanet(planetIndex, filteredAttr):
 def sendNotificationEvent(hasEnded, event, deviation):
 
     gifURL = None
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
 
     if not hasEnded:
 
@@ -394,7 +394,7 @@ def sendNotificationEvent(hasEnded, event, deviation):
 
 def sendNotificationDSS(newPIndex, oldPIndex, newEffects, oldEffects):
 
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
 
     if oldPIndex in planetNames.planet_names: oldName = planetNames.planet_names.get(oldPIndex)
     else: return ("ERROR, NO NAME")
@@ -411,8 +411,8 @@ def sendNotificationDSS(newPIndex, oldPIndex, newEffects, oldEffects):
         for effectIDNew in newEffects:
             if effectIDNew not in oldEffects:
                 textList = []
-                if effectIDNew in actionsDSS:
-                    effectNameNew = actionsDSS[effectIDNew]
+                if effectIDNew in namesID.planetEffects:
+                    effectNameNew = namesID.planetEffects[effectIDNew]
                     textList.append(f"**EFFECT {effectNameNew.upper()} ({effectIDNew}) ADDED**\n")
 
                 else:textList.append(f"**EFFECT {effectIDNew} ADDED**\n")
@@ -420,8 +420,8 @@ def sendNotificationDSS(newPIndex, oldPIndex, newEffects, oldEffects):
         for effectIDOld in oldEffects:
             if effectIDOld not in newEffects:
                 textList = []
-                if effectIDOld in actionsDSS:
-                    effectNameOld = actionsDSS[effectIDOld]
+                if effectIDOld in namesID.planetEffects:
+                    effectNameOld = namesID.planetEffects[effectIDOld]
                     textList.append(f"**EFFECT {effectNameOld.upper()} ({effectIDOld}) ENDED**\n")
 
                 else:textList.append(f"**EFFECT {effectIDOld} ENDED**\n")
@@ -435,7 +435,7 @@ def sendNotificationGenInfo(oldData):
     newGenInfo = deepcopy(apiStuff.get('generalInfo', []))
     
     if newGenInfo == oldGenInfo: return
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
 
     if not oldGenInfo:
         newLayout = newGenInfo["layoutVersion"]
@@ -467,7 +467,7 @@ def sendNotificationGenInfo(oldData):
 def sendNotificationCampaign(oldData):
     oldCampaign = deepcopy(oldData.get("campaignData", []))
     newCampaign = deepcopy(apiStuff.get("campaignData", []))
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
 
     if oldCampaign == newCampaign: return
 
@@ -523,7 +523,7 @@ def sendNotificationCampaign(oldData):
 def sendNotificationGlobalEvent(oldData):
     oldGlobal = deepcopy(oldData.get("globalEvents", []))
     newGlobal = deepcopy(apiStuff.get("globalEvents", []))
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
 
     newGlobalDict = {globalEvent["eventId"]: globalEvent for globalEvent in newGlobal}
     oldGlobalDict = {globalEvent["eventId"]: globalEvent for globalEvent in oldGlobal}
@@ -587,7 +587,7 @@ def updateRegionData(oldData):
 
     regionChanges = {}
     update = False
-    timestamp = dt.now(pytz.timezone("UTC")).strftime("%Y/%m/%d, %H:%M:%S")
+    timestamp = dt.now(pytz.timezone("Brazil/West")).strftime("%Y/%m/%d, %H:%M:%S")
 
     for keyStr, newRegion in newRegionMap.items():
         oldRegion = oldRegionMap.get(keyStr)
@@ -653,7 +653,7 @@ def updatePlanetData(oldData):
 
     planetChanges = {}
     update = False
-    timestamp = dt.now(pytz.timezone("UTC")).strftime("%Y/%m/%d, %H:%M:%S")
+    timestamp = dt.now(pytz.timezone("Brazil/West")).strftime("%Y/%m/%d, %H:%M:%S")
 
     for index, newPlanet in newPlanetMap.items():
         oldPlanet = oldPlanetMap.get(index)
@@ -739,7 +739,7 @@ def updatePlanetEvents(oldData):
                     "new": newHP
                 }
     
-    timestamp = dt.now(pytz.timezone("UTC")).strftime("%Y/%m/%d, %H:%M:%S")
+    timestamp = dt.now(pytz.timezone("Brazil/West")).strftime("%Y/%m/%d, %H:%M:%S")
 
     if healthChanges:
             with open('eventsHealthChange.json', 'w', encoding='utf-8') as file:
@@ -775,7 +775,7 @@ def sendNotificationNews(oldData):
 
     oldNews = deepcopy(oldData.get('newsFeed', []))
     newNews = deepcopy(apiStuff.get('newsFeed', []))
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
 
     if newNews == oldNews: return
 
@@ -819,9 +819,9 @@ def sendNotificationMajorOrder(oldData):
 
     if newIDs == oldIDs: return
 
-    itemsIDs = deepcopy(valuesMeaning.itemID)
+    itemsIDs = deepcopy(namesID.itemID)
     
-    timestamp = dt.now(pytz.timezone("UTC")).isoformat()
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
 
     hasStartedIDs = newIDs - oldIDs
     unixNow = int(dt.now().timestamp())
@@ -914,6 +914,7 @@ def sendNotificationMajorOrder(oldData):
                 for tam in range(len(tasks["valueTypes"])):
                     if tasks["valueTypes"][tam] == 12:
                         planetID = tasks["values"][tam]
+                        if planetID == None: break
                         planetName = getPlanetName(planetID)
                 
                 descriptionList.append(f"**LIBERATE THE PLANET {planetName}**\n")
@@ -927,6 +928,7 @@ def sendNotificationMajorOrder(oldData):
                 for tam in range(len(tasks["valueTypes"])):
                     if tasks["valueTypes"][tam] == 12:
                         planetID = tasks["values"][tam]
+                        if planetID == None: break
                         planetName = getPlanetName(planetID)
                 
                 descriptionList.append(f"**HOLD THE PLANET {planetName}**\n")
@@ -1085,8 +1087,9 @@ def main(discordWebhook):
             sendNotificationCampaign(oldData)
             sendNotificationNews(oldData)
             sendNotificationGenInfo(oldData)
+            saveAPIData()
         
-        saveAPIData()
+        
 
 if __name__ == "__main__":
     main(discordWebhook)
