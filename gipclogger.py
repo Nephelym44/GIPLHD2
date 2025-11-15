@@ -677,7 +677,11 @@ def sendNotificationMajorOrder(oldData):
         settingsList = majorOrder.get("setting")
         majorOrderBriefing = settingsList.get("overrideBrief")
         tasksList = settingsList.get("tasks")
-        title = settingsList.get("overrideTitle")
+        titleOrder = settingsList.get("overrideTitle")
+        if titleOrder: 
+            title = (f"🚨{titleOrder}")
+            
+        else: title = (f"🚨MAJOR/SIDE ORDER")
         
         descriptionList = []
         descriptionList.append(f"\n**DISPATCH: {majorOrderBriefing}**\n")
