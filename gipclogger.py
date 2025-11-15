@@ -544,21 +544,22 @@ def sendNotificationGlobalEvent(oldData):
         titleEvent = globalEventEnded.get("title")
         message = globalEventEnded.get("message")
         cleanedMessage = re.sub("<i=1>|</i>", "", message)
-        effectGlobal = globalEventStarted.get("effectIds")
-        
-        for effect in effectGlobal:
-            if effect in namesID.planetEffects:
-                effectName = namesID.planetEffects[effect]
-                descriptionLines.append(f"**EFFECT ADDED {effectName} ({effect})\n**")
-
-            else:descriptionLines.append(f"**EFFECT ADDED {effect}\n**")
+        effectGlobal = globalEventEnded.get("effectIds")
 
         if titleEvent != "": descriptionLines.append(f"**{titleEvent}**\n")
         else: descriptionLines.append(f"**NO TITLE**\n")
 
         if cleanedMessage != "": descriptionLines.append(f"**{cleanedMessage}**")
         else: descriptionLines.append(f"**NO MESSAGE**")
+        
+        if effectGlobal:
+            for effect in effectGlobal:
+                if effect in namesID.planetEffects:
+                    effectName = namesID.planetEffects[effect]
+                    descriptionLines.append(f"**EFFECT ENDED {effectName} ({effect})\n**")
 
+                else:descriptionLines.append(f"**EFFECT ENDED {effect}\n**")
+        
         descriptionText = "\n".join(descriptionLines)
 
         createEmbed(title, descriptionText, imgURL, timestamp)
@@ -572,13 +573,6 @@ def sendNotificationGlobalEvent(oldData):
         cleanedMessage = re.sub("<i=1>|</i>", "", message)
         titleEvent = globalEventStarted.get("title")
         effectGlobal = globalEventStarted.get("effectIds")
-        
-        for effect in effectGlobal:
-            if effect in namesID.planetEffects:
-                effectName = namesID.planetEffects[effect]
-                descriptionLines.append(f"**EFFECT ADDED {effectName} ({effect})\n**")
-
-            else:descriptionLines.append(f"**EFFECT ADDED {effect}\n**")
 
         if titleEvent != "": descriptionLines.append(f"**{titleEvent}**\n")
         else: descriptionLines.append(f"**NO TITLE**\n")
@@ -586,6 +580,14 @@ def sendNotificationGlobalEvent(oldData):
         if cleanedMessage != "": descriptionLines.append(f"**{cleanedMessage}**")
         else: descriptionLines.append(f"**NO MESSAGE**")
         
+        if effectGlobal:
+            for effect in effectGlobal:
+                if effect in namesID.planetEffects:
+                    effectName = namesID.planetEffects[effect]
+                    descriptionLines.append(f"**EFFECT ADDED {effectName} ({effect})\n**")
+
+                else:descriptionLines.append(f"**EFFECT ADDED {effect}\n**")
+
         gametime = apiStuff["generalInfo"].get("time")
         expiresAt = globalEventStarted.get("expireTime")
 
@@ -597,7 +599,186 @@ def sendNotificationGlobalEvent(oldData):
         descriptionText = "\n".join(descriptionLines)
 
         createEmbed(title, descriptionText, imgURL, timestamp)
+
+def sendNotificationNews(oldData):
+
+    oldNews = deepcopy(oldData.get('newsFeed', []))
+    newNews = deepcopy(apiStuff.get('newsFeed', []))
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
+
+    if newNews == oldNews: return
+
+    oldDict = {news["id"]: news for news in oldNews}
+    newDict = {news["id"]: news for news in newNews}
+
+    oldIDs = set(oldDict.keys())
+    newIDs = set(newDict.keys())
+
+    hasStartedIDs = newIDs - oldIDs
+
+    for newsID in hasStartedIDs:
+        news = newDict[newsID]
+        descriptionLines = []
+        gametime = apiStuff["generalInfo"].get("time")
+        publishedAt = news.get("published")
+        message = news.get("message")
+        cleanedMessage = re.sub("<i=1>|</i>|<i=3>", "", message)
+
+        unixNow = int(dt.now().timestamp())
+        deviation =  unixNow - (startTimeConstant + gametime)
+        publishedAtReal = startTimeConstant + publishedAt + deviation
+
+        title = (f"🚨SUPER EARTH NEWS!")
+        descriptionLines.append(f"**{cleanedMessage}**\n")
+        descriptionLines.append(f"**SUPER NEWS PUBLISHED AT** <t:{publishedAtReal}>\n")
+        descriptionText = "\n".join(descriptionLines)
+
+        createEmbed(title, descriptionText, newsGif, timestamp)
+
+def sendNotificationMajorOrder(oldData):
+
+    oldMajorOrder = deepcopy(oldData.get('majorOrders', []))
+    newMajorOrder = deepcopy(apiStuff.get('majorOrders', []))
+
+    oldDict = {majorOrders["id32"]: majorOrders for majorOrders in oldMajorOrder}
+    newDict = {majorOrders["id32"]: majorOrders for majorOrders in newMajorOrder}
+
+    oldIDs = set(oldDict.keys())
+    newIDs = set(newDict.keys())
+
+    if newIDs == oldIDs: return
+
+    itemsIDs = deepcopy(namesID.itemID)
     
+    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
+
+    hasStartedIDs = newIDs - oldIDs
+    unixNow = int(dt.now().timestamp())
+    gametime = apiStuff["generalInfo"].get("time")
+    
+    for majorOrderID in hasStartedIDs:
+        majorOrder = newDict[majorOrderID]
+
+        expiresAt = majorOrder.get("expiresIn")
+        startedAt = majorOrder.get("startTime")
+        
+        deviation =  unixNow - (startTimeConstant + gametime)
+        startedAtAtReal = startTimeConstant + startedAt + deviation
+        expiresAtReal = startTimeConstant + (expiresAt + startedAt) + deviation
+        fromNow = dt.fromtimestamp(unixNow)
+        fromLater = dt.fromtimestamp(expiresAtReal)
+        timeTillEnd = fromLater - fromNow
+        totalHours = timeTillEnd.total_seconds() / 3600
+
+        days = totalHours / 24
+        hours = (days - int(days))* 24
+        minutes = (hours - int(hours)) * 60
+        
+        settingsList = majorOrder.get("setting")
+        majorOrderBriefing = settingsList.get("overrideBrief")
+        tasksList = settingsList.get("tasks")
+
+        title = ("🚨**MAJOR/SIDE ORDER**")
+        descriptionList = []
+        descriptionList.append(f"\n**DISPATCH: {majorOrderBriefing}**\n")
+
+        for tasks in tasksList:
+            
+            if tasks["type"] == 2:
+                # Gather
+                for tam in range(len(tasks["valueTypes"])):
+
+                    if tasks["valueTypes"][tam] == 1:
+                        factionID = tasks["values"][tam]
+                        if factionID == None: break
+                        factionName = factionNames.get(factionID)
+                    
+                    elif tasks["valueTypes"][tam] == 3:
+                        goal = tasks["values"][tam]
+                        if goal == None: break
+
+                    elif tasks["valueTypes"][tam] == 5:
+                        itemID = tasks["values"][tam]
+                        if itemID == None: break
+                        if itemID in itemsIDs:
+                            itemName = itemsIDs.get(itemID)
+                        else: itemName = "UNKNOWN"
+
+                descriptionList.append(f"**GATHER {goal} {itemName.upper()} FROM {factionName.upper()} PLANETS**\n")
+
+            elif tasks["type"] == 3:
+                #Eradicate
+                for tam in range(len(tasks["valueTypes"])):
+                    
+                    if tasks["valueTypes"][tam] == 3:
+                        goal = tasks["values"][tam]
+                        if goal == None: break
+
+                    elif tasks["valueTypes"][tam] == 5:
+                        itemID = tasks["values"][tam]
+                        if itemID == None: break
+                        if itemID in itemsIDs:
+                            itemName = itemsIDs.get(itemID)
+                        else: itemName = "UNKNOWN"
+                        
+                descriptionList.append(f"**KILL {goal} {itemName.upper()}**\n")
+
+            elif tasks["type"] == 4:
+                #Objectives ??
+                print(tasks["type"])
+
+            elif tasks["type"] == 7:
+                #Extract
+                print(tasks["type"])
+
+            elif tasks["type"] == 9:
+                #Operations
+                print(tasks["type"])
+
+            elif tasks["type"] == 11:
+                #Liberation
+                for tam in range(len(tasks["valueTypes"])):
+                    if tasks["valueTypes"][tam] == 12:
+                        planetID = tasks["values"][tam]
+                        if planetID == None: break
+                        planetName = getPlanetName(planetID)
+                
+                descriptionList.append(f"**LIBERATE THE PLANET {planetName}**\n")
+
+            elif tasks["type"] == 12:
+                #Defense
+                for tam in range(len(tasks["valueTypes"])):
+
+                    if tasks["valueTypes"][tam] == 1:
+                        factionID = tasks["values"][tam]
+                        if factionID == None: break
+                        factionName = factionNames.get(factionID)
+                    
+                    elif tasks["valueTypes"][tam] == 3:
+                        goal = tasks["values"][tam]
+                        if goal == None: break
+                
+                descriptionList.append(f"**DEFEND AGAINST {goal} FROM THE {factionName.upper()}**\n")
+
+            elif tasks["type"] == 13:
+                # Control = Hold
+                for tam in range(len(tasks["valueTypes"])):
+                    if tasks["valueTypes"][tam] == 12:
+                        planetID = tasks["values"][tam]
+                        if planetID == None: break
+                        planetName = getPlanetName(planetID)
+                
+                descriptionList.append(f"**HOLD THE PLANET {planetName}**\n")
+
+            elif tasks["type"] == 15:
+                #Conquest
+                print(tasks["type"])
+
+        descriptionList.append(f"**ORDER BEGUN <t:{startedAtAtReal}>**\n")
+        descriptionList.append(f"**ORDER ENDS IN {round(days)} DAYS, {round(hours)} HOURS AND {round(minutes)} MINUTES**\n")
+        descriptionText = "\n".join(descriptionList)
+        createEmbed(title, descriptionText, imgURL, timestamp)
+
 def updateRegionData(oldData):
 
     oldRegions = deepcopy(oldData.get("regionData", []))
@@ -793,186 +974,7 @@ def updateDSS(oldData):
 
     if changedElection and not (changedPIndex or changedEffects): return
     sendNotificationDSS(newPIndex, oldPIndex, newEffects, oldEffects)
-
-def sendNotificationNews(oldData):
-
-    oldNews = deepcopy(oldData.get('newsFeed', []))
-    newNews = deepcopy(apiStuff.get('newsFeed', []))
-    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
-
-    if newNews == oldNews: return
-
-    oldDict = {news["id"]: news for news in oldNews}
-    newDict = {news["id"]: news for news in newNews}
-
-    oldIDs = set(oldDict.keys())
-    newIDs = set(newDict.keys())
-
-    hasStartedIDs = newIDs - oldIDs
-
-    for newsID in hasStartedIDs:
-        news = newDict[newsID]
-        descriptionLines = []
-        gametime = apiStuff["generalInfo"].get("time")
-        publishedAt = news.get("published")
-        message = news.get("message")
-        cleanedMessage = re.sub("<i=1>|</i>|<i=3>", "", message)
-
-        unixNow = int(dt.now().timestamp())
-        deviation =  unixNow - (startTimeConstant + gametime)
-        publishedAtReal = startTimeConstant + publishedAt + deviation
-
-        title = (f"🚨SUPER EARTH NEWS!")
-        descriptionLines.append(f"**{cleanedMessage}**\n")
-        descriptionLines.append(f"**SUPER NEWS PUBLISHED AT** <t:{publishedAtReal}>\n")
-        descriptionText = "\n".join(descriptionLines)
-
-        createEmbed(title, descriptionText, newsGif, timestamp)
-
-def sendNotificationMajorOrder(oldData):
-
-    oldMajorOrder = deepcopy(oldData.get('majorOrders', []))
-    newMajorOrder = deepcopy(apiStuff.get('majorOrders', []))
-
-    oldDict = {majorOrders["id32"]: majorOrders for majorOrders in oldMajorOrder}
-    newDict = {majorOrders["id32"]: majorOrders for majorOrders in newMajorOrder}
-
-    oldIDs = set(oldDict.keys())
-    newIDs = set(newDict.keys())
-
-    if newIDs == oldIDs: return
-
-    itemsIDs = deepcopy(namesID.itemID)
-    
-    timestamp = dt.now(pytz.timezone("Brazil/West")).isoformat()
-
-    hasStartedIDs = newIDs - oldIDs
-    unixNow = int(dt.now().timestamp())
-    gametime = apiStuff["generalInfo"].get("time")
-    
-    for majorOrderID in hasStartedIDs:
-        majorOrder = newDict[majorOrderID]
-
-        expiresAt = majorOrder.get("expiresIn")
-        startedAt = majorOrder.get("startTime")
-        
-        deviation =  unixNow - (startTimeConstant + gametime)
-        startedAtAtReal = startTimeConstant + startedAt + deviation
-        expiresAtReal = startTimeConstant + (expiresAt + startedAt) + deviation
-        fromNow = dt.fromtimestamp(unixNow)
-        fromLater = dt.fromtimestamp(expiresAtReal)
-        timeTillEnd = fromLater - fromNow
-        totalHours = timeTillEnd.total_seconds() / 3600
-
-        days = totalHours / 24
-        hours = (days - int(days))* 24
-        minutes = (hours - int(hours)) * 60
-        
-        settingsList = majorOrder.get("setting")
-        majorOrderBriefing = settingsList.get("overrideBrief")
-        tasksList = settingsList.get("tasks")
-
-        title = ("🚨**MAJOR/SIDE ORDER**")
-        descriptionList = []
-        descriptionList.append(f"\n**DISPATCH: {majorOrderBriefing}**\n")
-
-        for tasks in tasksList:
-            
-            if tasks["type"] == 2:
-                # Gather
-                for tam in range(len(tasks["valueTypes"])):
-
-                    if tasks["valueTypes"][tam] == 1:
-                        factionID = tasks["values"][tam]
-                        if factionID == None: break
-                        factionName = factionNames.get(factionID)
-                    
-                    elif tasks["valueTypes"][tam] == 3:
-                        goal = tasks["values"][tam]
-                        if goal == None: break
-
-                    elif tasks["valueTypes"][tam] == 5:
-                        itemID = tasks["values"][tam]
-                        if itemID == None: break
-                        if itemID in itemsIDs:
-                            itemName = itemsIDs.get(itemID)
-                        else: itemName = "UNKNOWN"
-
-                descriptionList.append(f"**GATHER {goal} {itemName.upper()} FROM {factionName.upper()} PLANETS**\n")
-
-            elif tasks["type"] == 3:
-                #Eradicate
-                for tam in range(len(tasks["valueTypes"])):
-                    
-                    if tasks["valueTypes"][tam] == 3:
-                        goal = tasks["values"][tam]
-                        if goal == None: break
-
-                    elif tasks["valueTypes"][tam] == 5:
-                        itemID = tasks["values"][tam]
-                        if itemID == None: break
-                        if itemID in itemsIDs:
-                            itemName = itemsIDs.get(itemID)
-                        else: itemName = "UNKNOWN"
-                        
-                descriptionList.append(f"**KILL {goal} {itemName.upper()}**\n")
-
-            elif tasks["type"] == 4:
-                #Objectives ??
-                print(tasks["type"])
-
-            elif tasks["type"] == 7:
-                #Extract
-                print(tasks["type"])
-
-            elif tasks["type"] == 9:
-                #Operations
-                print(tasks["type"])
-
-            elif tasks["type"] == 11:
-                #Liberation
-                for tam in range(len(tasks["valueTypes"])):
-                    if tasks["valueTypes"][tam] == 12:
-                        planetID = tasks["values"][tam]
-                        if planetID == None: break
-                        planetName = getPlanetName(planetID)
-                
-                descriptionList.append(f"**LIBERATE THE PLANET {planetName}**\n")
-
-            elif tasks["type"] == 12:
-                #Defense
-                for tam in range(len(tasks["valueTypes"])):
-
-                    if tasks["valueTypes"][tam] == 1:
-                        factionID = tasks["values"][tam]
-                        if factionID == None: break
-                        factionName = factionNames.get(factionID)
-                    
-                    elif tasks["valueTypes"][tam] == 3:
-                        goal = tasks["values"][tam]
-                        if goal == None: break
-                
-                descriptionList.append(f"**DEFEND AGAINST {goal} FROM THE {factionName.upper()}**\n")
-
-            elif tasks["type"] == 13:
-                # Control = Hold
-                for tam in range(len(tasks["valueTypes"])):
-                    if tasks["valueTypes"][tam] == 12:
-                        planetID = tasks["values"][tam]
-                        if planetID == None: break
-                        planetName = getPlanetName(planetID)
-                
-                descriptionList.append(f"**HOLD THE PLANET {planetName}**\n")
-
-            elif tasks["type"] == 15:
-                #Conquest
-                print(tasks["type"])
-
-        descriptionList.append(f"**ORDER BEGUN <t:{startedAtAtReal}>**\n")
-        descriptionList.append(f"**ORDER ENDS IN {round(days)} DAYS, {round(hours)} HOURS AND {round(minutes)} MINUTES**\n")
-        descriptionText = "\n".join(descriptionList)
-        createEmbed(title, descriptionText, imgURL, timestamp)
-      
+   
 def getAPIInfo():
 
     staticRequest = requests.get(urlWarinfo) 
@@ -1120,7 +1122,5 @@ def main(discordWebhook):
             sendNotificationGenInfo(oldData)
             saveAPIData()
         
-        
-
 if __name__ == "__main__":
     main(discordWebhook)
