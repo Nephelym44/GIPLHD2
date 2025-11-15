@@ -544,9 +544,21 @@ def sendNotificationGlobalEvent(oldData):
         titleEvent = globalEventEnded.get("title")
         message = globalEventEnded.get("message")
         cleanedMessage = re.sub("<i=1>|</i>", "", message)
+        effectGlobal = globalEventStarted.get("effectIds")
+        
+        for effect in effectGlobal:
+            if effect in namesID.planetEffects:
+                effectName = namesID.planetEffects[effect]
+                descriptionLines.append(f"**EFFECT ADDED {effectName} ({effect})\n**")
 
-        descriptionLines.append(f"{titleEvent}\n")
-        descriptionLines.append(f"**{cleanedMessage}**")
+            else:descriptionLines.append(f"**EFFECT ADDED {effect}\n**")
+
+        if titleEvent != "": descriptionLines.append(f"**{titleEvent}**\n")
+        else: descriptionLines.append(f"**NO TITLE**\n")
+
+        if cleanedMessage != "": descriptionLines.append(f"**{cleanedMessage}**")
+        else: descriptionLines.append(f"**NO MESSAGE**")
+
         descriptionText = "\n".join(descriptionLines)
 
         createEmbed(title, descriptionText, imgURL, timestamp)
@@ -559,10 +571,21 @@ def sendNotificationGlobalEvent(oldData):
         message = globalEventStarted.get("message")
         cleanedMessage = re.sub("<i=1>|</i>", "", message)
         titleEvent = globalEventStarted.get("title")
+        effectGlobal = globalEventStarted.get("effectIds")
+        
+        for effect in effectGlobal:
+            if effect in namesID.planetEffects:
+                effectName = namesID.planetEffects[effect]
+                descriptionLines.append(f"**EFFECT ADDED {effectName} ({effect})\n**")
 
-        descriptionLines.append(f"{titleEvent}\n")
-        descriptionLines.append(f"**{cleanedMessage}**")
+            else:descriptionLines.append(f"**EFFECT ADDED {effect}\n**")
 
+        if titleEvent != "": descriptionLines.append(f"**{titleEvent}**\n")
+        else: descriptionLines.append(f"**NO TITLE**\n")
+
+        if cleanedMessage != "": descriptionLines.append(f"**{cleanedMessage}**")
+        else: descriptionLines.append(f"**NO MESSAGE**")
+        
         gametime = apiStuff["generalInfo"].get("time")
         expiresAt = globalEventStarted.get("expireTime")
 
@@ -574,7 +597,7 @@ def sendNotificationGlobalEvent(oldData):
         descriptionText = "\n".join(descriptionLines)
 
         createEmbed(title, descriptionText, imgURL, timestamp)
-     
+    
 def updateRegionData(oldData):
 
     oldRegions = deepcopy(oldData.get("regionData", []))
@@ -871,31 +894,28 @@ def sendNotificationMajorOrder(oldData):
                     elif tasks["valueTypes"][tam] == 5:
                         itemID = tasks["values"][tam]
                         if itemID == None: break
-                        itemName = itemsIDs.get(itemID)
+                        if itemID in itemsIDs:
+                            itemName = itemsIDs.get(itemID)
+                        else: itemName = "UNKNOWN"
 
                 descriptionList.append(f"**GATHER {goal} {itemName.upper()} FROM {factionName.upper()} PLANETS**\n")
 
             elif tasks["type"] == 3:
                 #Eradicate
                 for tam in range(len(tasks["valueTypes"])):
-
-                    if tasks["valueTypes"][tam] == 1:
-                        factionID = tasks["values"][tam]
-                        if factionID == None: break
-                        factionName = factionNames.get(factionID)
                     
-                    elif tasks["valueTypes"][tam] == 3:
+                    if tasks["valueTypes"][tam] == 3:
                         goal = tasks["values"][tam]
                         if goal == None: break
 
                     elif tasks["valueTypes"][tam] == 5:
                         itemID = tasks["values"][tam]
                         if itemID == None: break
-                        itemName = itemsIDs.get(itemID)
-
+                        if itemID in itemsIDs:
+                            itemName = itemsIDs.get(itemID)
+                        else: itemName = "UNKNOWN"
+                        
                 descriptionList.append(f"**KILL {goal} {itemName.upper()}**\n")
-                
-                print(tasks["type"])
 
             elif tasks["type"] == 4:
                 #Objectives ??
@@ -921,7 +941,18 @@ def sendNotificationMajorOrder(oldData):
 
             elif tasks["type"] == 12:
                 #Defense
-                print(tasks["type"])
+                for tam in range(len(tasks["valueTypes"])):
+
+                    if tasks["valueTypes"][tam] == 1:
+                        factionID = tasks["values"][tam]
+                        if factionID == None: break
+                        factionName = factionNames.get(factionID)
+                    
+                    elif tasks["valueTypes"][tam] == 3:
+                        goal = tasks["values"][tam]
+                        if goal == None: break
+                
+                descriptionList.append(f"**DEFEND AGAINST {goal} FROM THE {factionName.upper()}**\n")
 
             elif tasks["type"] == 13:
                 # Control = Hold
@@ -941,7 +972,7 @@ def sendNotificationMajorOrder(oldData):
         descriptionList.append(f"**ORDER ENDS IN {round(days)} DAYS, {round(hours)} HOURS AND {round(minutes)} MINUTES**\n")
         descriptionText = "\n".join(descriptionList)
         createEmbed(title, descriptionText, imgURL, timestamp)
-        
+      
 def getAPIInfo():
 
     staticRequest = requests.get(urlWarinfo) 
