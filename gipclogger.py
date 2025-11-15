@@ -549,16 +549,16 @@ def sendNotificationGlobalEvent(oldData):
         if titleEvent != "": descriptionLines.append(f"**{titleEvent}**\n")
         else: descriptionLines.append(f"**NO TITLE**\n")
 
-        if cleanedMessage != "": descriptionLines.append(f"**{cleanedMessage}**")
-        else: descriptionLines.append(f"**NO MESSAGE**")
+        if cleanedMessage != "": descriptionLines.append(f"**{cleanedMessage}**\n")
+        else: descriptionLines.append(f"**NO MESSAGE**\n")
         
         if effectGlobal:
             for effect in effectGlobal:
                 if effect in namesID.planetEffects:
                     effectName = namesID.planetEffects[effect]
-                    descriptionLines.append(f"**EFFECT ENDED {effectName} ({effect})\n**")
+                    descriptionLines.append(f"**EFFECT ENDED {effectName} ({effect})**\n")
 
-                else:descriptionLines.append(f"**EFFECT ENDED {effect}\n**")
+                else:descriptionLines.append(f"**EFFECT ENDED {effect}**\n")
         
         descriptionText = "\n".join(descriptionLines)
 
@@ -578,7 +578,7 @@ def sendNotificationGlobalEvent(oldData):
         else: descriptionLines.append(f"**NO TITLE**\n")
 
         if cleanedMessage != "": descriptionLines.append(f"**{cleanedMessage}**")
-        else: descriptionLines.append(f"**NO MESSAGE**")
+        else: descriptionLines.append(f"**NO MESSAGE**\n")
         
         if effectGlobal:
             for effect in effectGlobal:
@@ -595,7 +595,7 @@ def sendNotificationGlobalEvent(oldData):
         deviation =  unixNow - (startTimeConstant + gametime)
         expiresAtReal = startTimeConstant + expiresAt + deviation
 
-        descriptionLines.append(f"**\nGLOBAL EVENT ENDS**: <t:{expiresAtReal}>\n")
+        descriptionLines.append(f"\n**GLOBAL EVENT ENDS**: <t:{expiresAtReal}>\n")
         descriptionText = "\n".join(descriptionLines)
 
         createEmbed(title, descriptionText, imgURL, timestamp)
