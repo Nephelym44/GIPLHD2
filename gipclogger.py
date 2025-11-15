@@ -88,7 +88,7 @@ def createEmbed(title, description, image, timestamp):
 
         try:
             data = {"embeds": [embed]}
-            response = requests.post(discordWebhook, json=data)
+            response = requests.post(discordWebhook, json=data, timeout=5)
             time.sleep(1)
             if response.status_code != 204:
                 print(f"Webhook falhou ({response.status_code}): {response.text}")
@@ -101,7 +101,7 @@ def createEmbed(title, description, image, timestamp):
 
 def saveAPIData():
     apiDataPath.write_text(json.dumps(apiStuff, indent=2, ensure_ascii=False), encoding='utf-8')
-               
+    
 def loadAPIData():
     if apiDataPath.exists():
         return json.loads(apiDataPath.read_text(encoding='utf-8'))
@@ -981,7 +981,7 @@ def updateDSS(oldData):
    
 def getAPIInfo():
 
-    staticRequest = requests.get(urlWarinfo) 
+    staticRequest = requests.get(urlWarinfo, timeout=5) 
     if staticRequest.status_code == 200:
         staticData = staticRequest.json() 
     else:
@@ -989,7 +989,7 @@ def getAPIInfo():
         time.sleep(4)
         return 
     
-    statusRequest = requests.get(urlStatus) 
+    statusRequest = requests.get(urlStatus, timeout=5) 
     if statusRequest.status_code == 200:
         statusData = statusRequest.json() 
     else:
@@ -997,7 +997,7 @@ def getAPIInfo():
         time.sleep(4)
         return 
     
-    diveharderRequest = requests.get(urlDiveHarder) 
+    diveharderRequest = requests.get(urlDiveHarder, timeout=5) 
     if diveharderRequest.status_code == 200:
         diveHarder = diveharderRequest.json() 
     else:
