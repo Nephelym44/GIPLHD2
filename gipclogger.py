@@ -680,14 +680,15 @@ def sendNotificationMajorOrder(oldData):
     timestamp = dt.now(pytz.timezone("UTC")).isoformat()
 
     hasStartedIDs = newIDs - oldIDs
+    hasEndedIDs = oldIDs - newIDs
     unixNow = int(dt.now().timestamp())
     gametime = apiStuff["generalInfo"].get("time")
     
     for majorOrderID in hasStartedIDs:
-        majorOrder = newDict[majorOrderID]
+        order = newDict[majorOrderID]
 
-        expiresAt = majorOrder.get("expiresIn")
-        startedAt = majorOrder.get("startTime")
+        expiresAt = order.get("expiresIn")
+        startedAt = order.get("startTime")
         
         deviation =  unixNow - (startTimeConstant + gametime)
         startedAtAtReal = startTimeConstant + startedAt + deviation
@@ -698,20 +699,19 @@ def sendNotificationMajorOrder(oldData):
         totalHours = timeTillEnd.total_seconds() / 3600
 
         days = totalHours / 24
-        hours = (days - int(days))* 24
+        hours = (days - int(days)) * 24
         minutes = (hours - int(hours)) * 60
         
-        settingsList = majorOrder.get("setting")
-        majorOrderBriefing = settingsList.get("overrideBrief")
+        settingsList = order.get("setting")
+        orderBriefing = settingsList.get("overrideBrief")
         tasksList = settingsList.get("tasks")
         titleOrder = settingsList.get("overrideTitle")
         if titleOrder: 
-            title = (f"🚨{titleOrder}")
-            
+            title = (f"🚨{titleOrder.upper()}")
         else: title = (f"🚨MAJOR/SIDE ORDER")
         
         descriptionList = []
-        descriptionList.append(f"\n**DISPATCH: {majorOrderBriefing}**\n")
+        descriptionList.append(f"\n**DISPATCH: {orderBriefing}**\n")
 
         for tasks in tasksList:
             
@@ -809,6 +809,20 @@ def sendNotificationMajorOrder(oldData):
         descriptionList.append(f"**ORDER ENDS IN {round(days)} DAYS, {round(hours)} HOURS AND {round(minutes)} MINUTES**\n")
         descriptionText = "\n".join(descriptionList)
         createEmbed(title, descriptionText, imgURL, timestamp)
+
+    for majorOrderID in hasEndedIDs:
+        order = newDict[majorOrderID]
+        orderBriefing = settingsList.get("overrideBrief")
+        titleOrder = settingsList.get("overrideTitle")
+        if titleOrder: 
+            title = (f"🚨{titleOrder.upper()} HAS ENDED")
+        else: title = (f"🚨MAJOR/SIDE ORDER HAS ENDED")
+        
+        descriptionList = []
+        descriptionList.append(f"\n**DISPATCH: {orderBriefing}**\n")
+        descriptionText = "\n".join(descriptionList)
+        createEmbed(title, descriptionText, imgURL, timestamp)
+
 
 def updateRegionData(oldData):
 
