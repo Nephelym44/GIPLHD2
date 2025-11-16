@@ -692,7 +692,7 @@ def sendNotificationMajorOrder(oldData):
         
         deviation =  unixNow - (startTimeConstant + gametime)
         startedAtAtReal = startTimeConstant + startedAt + deviation
-        expiresAtReal = startTimeConstant + (expiresAt + startedAt) + deviation
+        expiresAtReal = startTimeConstant + (expiresAt + gametime) + deviation
         fromNow = dt.fromtimestamp(unixNow)
         fromLater = dt.fromtimestamp(expiresAtReal)
         timeTillEnd = fromLater - fromNow
@@ -806,7 +806,7 @@ def sendNotificationMajorOrder(oldData):
                 print(tasks["type"])
 
         descriptionList.append(f"**ORDER BEGUN <t:{startedAtAtReal}>**\n")
-        descriptionList.append(f"**ORDER ENDS IN {round(days)} DAYS, {round(hours)} HOURS AND {round(minutes)} MINUTES**\n")
+        descriptionList.append(f"**ORDER ENDS IN {int(days)} DAYS, {int(hours)} HOURS AND {int(minutes)} MINUTES**\n")
         descriptionText = "\n".join(descriptionList)
         createEmbed(title, descriptionText, imgURL, timestamp)
 
@@ -822,7 +822,6 @@ def sendNotificationMajorOrder(oldData):
         descriptionList.append(f"\n**DISPATCH: {orderBriefing}**\n")
         descriptionText = "\n".join(descriptionList)
         createEmbed(title, descriptionText, imgURL, timestamp)
-
 
 def updateRegionData(oldData):
 
