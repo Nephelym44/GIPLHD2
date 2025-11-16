@@ -106,11 +106,11 @@ def loadAPIData():
     if apiDataPath.exists():
         return json.loads(apiDataPath.read_text(encoding='utf-8'))
 
-def requestAPI(url, timeout=5):
+def requestAPI(url):
     timestamp = dt.now(pytz.timezone("UTC")).strftime("%Y/%m/%d, %H:%M:%S")
     
     try: 
-        response = requests.get(url, timeout) 
+        response = requests.get(url, timeout=5) 
         return response.json()
 
     except requests.exceptions.Timeout as t:
