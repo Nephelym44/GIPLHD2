@@ -622,7 +622,7 @@ def sendNotificationGlobalEvent(oldData):
         deviation =  unixNow - (startTimeConstant + gametime)
         expiresAtReal = startTimeConstant + expiresAt + deviation
 
-        descriptionLines.append(f"\n**GLOBAL EVENT ENDS**: <t:{expiresAtReal}>\n")
+        descriptionLines.append(f"**GLOBAL EVENT ENDS**: <t:{expiresAtReal}>")
         descriptionText = "\n".join(descriptionLines)
 
         createEmbed(title, descriptionText, imgURL, timestamp)
