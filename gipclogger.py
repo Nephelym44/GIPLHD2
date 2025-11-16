@@ -143,8 +143,8 @@ def sendNotificationRegion(planetIndex, filteredAttr, hash):
     regionName = getRegionName(hash)
     regionSize = getRegionSize(hash)
 
-    if not isinstance(planetName, str): return ("ERROR, NAME NOT FOUND")
-    if not isinstance(regionName, str): return ("ERROR, NAME NOT FOUND")
+    if not isinstance(planetName, str): return
+    if not isinstance(regionName, str): return
 
     title = "🚨REGION UPDATE DETECTED!"
     filteredLines.append(f"**\nPLANET NAME: {planetName}**\n")
@@ -218,7 +218,7 @@ def sendNotificationPlanet(planetIndex, filteredAttr):
     filteredLines = []
     timestamp = dt.now(pytz.timezone("UTC")).isoformat()
     planetName = getPlanetName(int(planetIndex))
-    if not isinstance(planetName, str): return ("ERROR, NAME NOT FOUND")
+    if not isinstance(planetName, str): return 
 
     filteredLines.append(f"**\nPLANET NAME: {planetName}**\n")
 
@@ -327,8 +327,8 @@ def sendNotificationEvent(hasEnded, event, deviation):
         attackList = []
 
         if pIndex in planetNames.planet_names: pName = planetNames.planet_names.get(pIndex)
-        if not isinstance(faction, str): return ("ERROR, NAME NOT FOUND")
-        if not isinstance(typeEvent, str): return ("ERROR, NAME NOT FOUND")
+        if not isinstance(faction, str): return
+        if not isinstance(typeEvent, str): return 
         gifURL = gifsOwner.get(race)
         
         for planet in planetAttacks:
@@ -397,10 +397,10 @@ def sendNotificationDSS(newPIndex, oldPIndex, newEffects, oldEffects):
     timestamp = dt.now(pytz.timezone("UTC")).isoformat()
 
     if oldPIndex in planetNames.planet_names: oldName = planetNames.planet_names.get(oldPIndex)
-    else: return ("ERROR, NO NAME")
+    else: return 
 
     if newPIndex in planetNames.planet_names: newName = planetNames.planet_names.get(newPIndex)
-    else: return ("ERROR, NO NAME")
+    else: return 
 
     if not newPIndex == oldPIndex:
         textList = []
