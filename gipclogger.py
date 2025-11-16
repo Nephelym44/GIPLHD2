@@ -987,7 +987,7 @@ def getAPIInfo():
     else:
         print(f"Failed to retrieve API data {staticRequest.status_code}.")
         time.sleep(4)
-        return 
+        return False
     
     statusRequest = requests.get(urlStatus, timeout=5) 
     if statusRequest.status_code == 200:
@@ -995,7 +995,7 @@ def getAPIInfo():
     else:
         print(f"Failed to retrieve API data {statusRequest.status_code}.")
         time.sleep(4)
-        return 
+        return False
     
     diveharderRequest = requests.get(urlDiveHarder, timeout=5) 
     if diveharderRequest.status_code == 200:
@@ -1003,7 +1003,7 @@ def getAPIInfo():
     else:
         print(f"Failed to retrieve API data {diveharderRequest.status_code}.")
         time.sleep(4)
-        return 
+        return False
     
     diveharderRequest = None
     staticRequest = None
@@ -1087,6 +1087,8 @@ def getAPIInfo():
         "storyBeatId32": statusData.get("storyBeatId32"),
     }
 
+    return True
+
 def main(discordWebhook):
     if discordWebhook == None:
         print("INSERT YOUR DISCORD WEBHOOK LINK. PLEASE MAKE SURE IT IS CORRECT, OTHERWISE YOU HAVE TO MANUALLY CORRECT IT.\n")
@@ -1101,7 +1103,12 @@ def main(discordWebhook):
             input("\nPress any key to continue")
             return 0
 
-    getAPIInfo()
+    passed = getAPIInfo()
+    
+    if not passed:
+        while not passed:
+            time.sleep(25)
+            passed = getAPIInfo()
 
     if not apiDataPath.exists():
         print("Initializing API file")
