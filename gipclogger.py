@@ -106,6 +106,33 @@ def loadAPIData():
     if apiDataPath.exists():
         return json.loads(apiDataPath.read_text(encoding='utf-8'))
 
+def requestAPI(url, timeout=5):
+    timestamp = dt.now(pytz.timezone("UTC")).strftime("%Y/%m/%d, %H:%M:%S")
+    
+    try: 
+        response = requests.get(url, timeout) 
+        return response.json()
+
+    except requests.exceptions.Timeout as t:
+        print(f"[{timestamp}] Timeout detected trying to access the API.")
+        print(t)
+        return False
+    
+    except requests.exceptions.ConnectionError as c:
+        print(f"[{timestamp}] Connection error detected trying to access the API.")
+        print(c)
+        return False
+
+    except requests.exceptions.RequestException as e:
+        print(f"[{timestamp}] Error detected trying to access the API.")
+        print(e)
+        return False
+    
+    except json.decoder.JSONDecodeError as j:
+        print(f"[{timestamp}] Error detected on JSON.")
+        print(j)
+        return False
+
 def getPlanetName(planetIndex):
     try:
         for planet in apiStuff['planetData']:
@@ -143,8 +170,8 @@ def sendNotificationRegion(planetIndex, filteredAttr, hash):
     regionName = getRegionName(hash)
     regionSize = getRegionSize(hash)
 
-    if not isinstance(planetName, str): return
-    if not isinstance(regionName, str): return
+    if not isinstance(planetName, str): planetName = ("Name not found")
+    if not isinstance(regionName, str): regionName = ("Name not found")
 
     title = "🚨REGION UPDATE DETECTED!"
     filteredLines.append(f"**\nPLANET NAME: {planetName}**\n")
@@ -218,7 +245,7 @@ def sendNotificationPlanet(planetIndex, filteredAttr):
     filteredLines = []
     timestamp = dt.now(pytz.timezone("UTC")).isoformat()
     planetName = getPlanetName(int(planetIndex))
-    if not isinstance(planetName, str): return 
+    if not isinstance(planetName, str): planetName = ("Name not found")
 
     filteredLines.append(f"**\nPLANET NAME: {planetName}**\n")
 
@@ -327,8 +354,8 @@ def sendNotificationEvent(hasEnded, event, deviation):
         attackList = []
 
         if pIndex in planetNames.planet_names: pName = planetNames.planet_names.get(pIndex)
-        if not isinstance(faction, str): return
-        if not isinstance(typeEvent, str): return 
+        if not isinstance(faction, str): faction = ("faction not found")
+        if not isinstance(typeEvent, str): typeEvent = ("typeEvent not found")
         gifURL = gifsOwner.get(race)
         
         for planet in planetAttacks:
@@ -372,8 +399,8 @@ def sendNotificationEvent(hasEnded, event, deviation):
                 break
      
         if pIndex in planetNames.planet_names: pName = planetNames.planet_names.get(pIndex)
-        if not isinstance(faction, str): faction = ("name not found")
-        if not isinstance(typeEvent, str): typeEvent = ("name not found")
+        if not isinstance(faction, str): faction = ("faction not found")
+        if not isinstance(typeEvent, str): typeEvent = ("typeEvent not found")
 
         title = "🚨PLANET EVENT ENDED!"
         descriptionList = [] 
@@ -981,29 +1008,14 @@ def updateDSS(oldData):
    
 def getAPIInfo():
 
-    staticRequest = requests.get(urlWarinfo, timeout=5) 
-    if staticRequest.status_code == 200:
-        staticData = staticRequest.json() 
-    else:
-        print(f"Failed to retrieve API data {staticRequest.status_code}.")
-        time.sleep(4)
-        return False
-    
-    statusRequest = requests.get(urlStatus, timeout=5) 
-    if statusRequest.status_code == 200:
-        statusData = statusRequest.json() 
-    else:
-        print(f"Failed to retrieve API data {statusRequest.status_code}.")
-        time.sleep(4)
-        return False
-    
-    diveharderRequest = requests.get(urlDiveHarder, timeout=5) 
-    if diveharderRequest.status_code == 200:
-        diveHarder = diveharderRequest.json() 
-    else:
-        print(f"Failed to retrieve API data {diveharderRequest.status_code}.")
-        time.sleep(4)
-        return False
+    staticData = requestAPI(urlWarinfo)
+    if staticData is False: return False
+
+    statusData = requestAPI(urlStatus)
+    if statusData is False: return False
+
+    diveHarder = requestAPI(urlDiveHarder)
+    if diveHarder is False: return False
     
     diveharderRequest = None
     staticRequest = None
@@ -1089,7 +1101,35 @@ def getAPIInfo():
 
     return True
 
+def checkAPI():
+    passed = getAPIInfo()
+    if passed is False:
+        while passed is False:
+            time.sleep(25)
+            passed = getAPIInfo()
+    else: return
+
+def loggerLoop():
+
+    timestampStart = dt.now(pytz.timezone("UTC")).strftime("%Y/%m/%d, %H:%M:%S")
+    print(f"[{timestampStart}]")
+    time.sleep(30)
+    checkAPI()
+    oldData = loadAPIData()
+    if oldData:
+        updatePlanetData(oldData)
+        updateRegionData(oldData)
+        updatePlanetEvents(oldData)
+        updateDSS(oldData)
+        sendNotificationMajorOrder(oldData)
+        sendNotificationGlobalEvent(oldData)
+        sendNotificationCampaign(oldData)
+        sendNotificationNews(oldData)
+        sendNotificationGenInfo(oldData)
+        saveAPIData()
+
 def main(discordWebhook):
+
     if discordWebhook == None:
         print("INSERT YOUR DISCORD WEBHOOK LINK. PLEASE MAKE SURE IT IS CORRECT, OTHERWISE YOU HAVE TO MANUALLY CORRECT IT.\n")
         webHookLink = input("WEBHOOK LINK: ")
@@ -1103,35 +1143,19 @@ def main(discordWebhook):
             input("\nPress any key to continue")
             return 0
 
-    passed = getAPIInfo()
-    
-    if not passed:
-        while not passed:
-            time.sleep(25)
-            passed = getAPIInfo()
-
+    checkAPI()
     if not apiDataPath.exists():
         print("Initializing API file")
         saveAPIData()
 
     while True:
-        timestampStart = dt.now(pytz.timezone("UTC")).strftime("%Y/%m/%d, %H:%M:%S")
-        print(f"[{timestampStart}]")
-        time.sleep(30)
-        getAPIInfo()
-        oldData = loadAPIData()
+        try: loggerLoop()
 
-        if oldData: 
-            updatePlanetData(oldData)
-            updateRegionData(oldData)
-            updatePlanetEvents(oldData)
-            updateDSS(oldData)
-            sendNotificationMajorOrder(oldData)
-            sendNotificationGlobalEvent(oldData)
-            sendNotificationCampaign(oldData)
-            sendNotificationNews(oldData)
-            sendNotificationGenInfo(oldData)
-            saveAPIData()
+        except Exception as e:
+            timestampStart = dt.now(pytz.timezone("UTC")).strftime("%Y/%m/%d, %H:%M:%S")
+            print(f"[{timestampStart}] Error detected")
+            print(e)
+            time.sleep(10)
         
 if __name__ == "__main__":
     main(discordWebhook)
