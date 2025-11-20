@@ -811,7 +811,7 @@ def sendNotificationMajorOrder(oldData):
         createEmbed(title, descriptionText, imgURL, timestamp)
 
     for majorOrderID in hasEndedIDs:
-        order = newDict[majorOrderID]
+        order = oldDict[majorOrderID]
         orderBriefing = settingsList.get("overrideBrief")
         titleOrder = settingsList.get("overrideTitle")
         if titleOrder: 
