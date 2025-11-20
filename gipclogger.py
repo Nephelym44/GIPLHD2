@@ -570,13 +570,14 @@ def sendNotificationGlobalEvent(oldData):
         title = (f"🚨GLOBAL EVENT ENDED")
         titleEvent = globalEventEnded.get("title")
         message = globalEventEnded.get("message")
-        cleanedMessage = re.sub("<i=1>|</i>", "", message)
         effectGlobal = globalEventEnded.get("effectIds")
 
-        if titleEvent != "": descriptionLines.append(f"**{titleEvent}**\n")
+        if titleEvent != None: descriptionLines.append(f"**{titleEvent}**\n")
         else: descriptionLines.append(f"**NO TITLE**\n")
 
-        if cleanedMessage != "": descriptionLines.append(f"**{cleanedMessage}**\n")
+        if message != None: 
+            cleanedMessage = re.sub("<i=1>|</i>", "", message)
+            descriptionLines.append(f"**{cleanedMessage}**\n")
         else: descriptionLines.append(f"**NO MESSAGE**\n")
         
         if effectGlobal:
@@ -597,14 +598,15 @@ def sendNotificationGlobalEvent(oldData):
 
         title = (f"🚨GLOBAL EVENT STARTED")
         message = globalEventStarted.get("message")
-        cleanedMessage = re.sub("<i=1>|</i>", "", message)
         titleEvent = globalEventStarted.get("title")
         effectGlobal = globalEventStarted.get("effectIds")
 
-        if titleEvent != "": descriptionLines.append(f"**{titleEvent}**\n")
+        if titleEvent != None: descriptionLines.append(f"**{titleEvent}**\n")
         else: descriptionLines.append(f"**NO TITLE**\n")
 
-        if cleanedMessage != "": descriptionLines.append(f"**{cleanedMessage}**")
+        if message != None:
+            cleanedMessage = re.sub("<i=1>|</i>", "", message)
+            descriptionLines.append(f"**{cleanedMessage}**\n")
         else: descriptionLines.append(f"**NO MESSAGE**\n")
         
         if effectGlobal:
