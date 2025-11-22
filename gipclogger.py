@@ -571,11 +571,12 @@ def sendNotificationGlobalEvent(oldData):
         titleEvent = globalEventEnded.get("title")
         message = globalEventEnded.get("message")
         effectGlobal = globalEventEnded.get("effectIds")
+        planetList = globalEventEnded.get("planetIndices")
 
-        if titleEvent != None: descriptionLines.append(f"**{titleEvent}**\n")
+        if titleEvent: descriptionLines.append(f"**{titleEvent}**\n")
         else: descriptionLines.append(f"**NO TITLE**\n")
 
-        if message != None: 
+        if message: 
             cleanedMessage = re.sub("<i=1>|</i>", "", message)
             descriptionLines.append(f"**{cleanedMessage}**\n")
         else: descriptionLines.append(f"**NO MESSAGE**\n")
@@ -587,6 +588,11 @@ def sendNotificationGlobalEvent(oldData):
                     descriptionLines.append(f"**EFFECT ENDED {effectName} ({effect})**\n")
 
                 else:descriptionLines.append(f"**EFFECT ENDED {effect}**\n")
+
+        if planetList:
+            for planet in planetList:
+                planetName = getPlanetName(planet)
+                descriptionLines.append(f"**EFFECT ENDED ON PLANET {planetName}**")
         
         descriptionText = "\n".join(descriptionLines)
 
@@ -600,11 +606,12 @@ def sendNotificationGlobalEvent(oldData):
         message = globalEventStarted.get("message")
         titleEvent = globalEventStarted.get("title")
         effectGlobal = globalEventStarted.get("effectIds")
+        planetList = globalEventStarted.get("planetIndices")
 
-        if titleEvent != None: descriptionLines.append(f"**{titleEvent}**\n")
+        if titleEvent: descriptionLines.append(f"**{titleEvent}**\n")
         else: descriptionLines.append(f"**NO TITLE**\n")
 
-        if message != None:
+        if message:
             cleanedMessage = re.sub("<i=1>|</i>", "", message)
             descriptionLines.append(f"**{cleanedMessage}**\n")
         else: descriptionLines.append(f"**NO MESSAGE**\n")
@@ -616,6 +623,11 @@ def sendNotificationGlobalEvent(oldData):
                     descriptionLines.append(f"**EFFECT ADDED {effectName} ({effect})\n**")
 
                 else:descriptionLines.append(f"**EFFECT ADDED {effect}\n**")
+
+        if planetList:
+            for planet in planetList:
+                planetName = getPlanetName(planet)
+                descriptionLines.append(f"**EFFECT ADDED ON PLANET {planetName}**")
 
         gametime = apiStuff["generalInfo"].get("time")
         expiresAt = globalEventStarted.get("expireTime")
