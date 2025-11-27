@@ -826,6 +826,7 @@ def sendNotificationMajorOrder(oldData):
 
     for majorOrderID in hasEndedIDs:
         order = oldDict[majorOrderID]
+        settingsList = order.get("setting")
         orderBriefing = settingsList.get("overrideBrief")
         titleOrder = settingsList.get("overrideTitle")
         if titleOrder: 
